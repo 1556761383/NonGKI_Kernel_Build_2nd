@@ -1939,10 +1939,10 @@ index 0000000..c7fd150
 +};
 diff --git a/fs/erofs/internal.h b/fs/erofs/internal.h
 new file mode 100644
-index 0000000..c52e771
+index 0000000..37b5d20
 --- /dev/null
 +++ b/fs/erofs/internal.h
-@@ -0,0 +1,467 @@
+@@ -0,0 +1,475 @@
 +/* SPDX-License-Identifier: GPL-2.0-only */
 +/*
 + * Copyright (C) 2017-2018 HUAWEI, Inc.
@@ -2103,8 +2103,16 @@ index 0000000..c52e771
 +
 +static inline int erofs_wait_on_workgroup_freezed(struct erofs_workgroup *grp)
 +{
-+	return atomic_cond_read_relaxed(&grp->refcount,
-+					VAL != EROFS_LOCKED_MAGIC);
++	/* 4.14 has no atomic_cond_read_relaxed (added in 4.18);
++	 * poll with atomic_read/cpu_relax until the group is unlocked. */
++	int val;
++
++	for (;;) {
++		val = atomic_read(&grp->refcount);
++		if (val != EROFS_LOCKED_MAGIC)
++			return val;
++		cpu_relax();
++	}
 +}
 +#else
 +static inline bool erofs_workgroup_try_to_freeze(struct erofs_workgroup *grp,
