@@ -118,6 +118,17 @@ jobs:
         run: |
           # Only ${{ env.DEVICE_NAME }} use it.
           cd $GITHUB_WORKSPACE/device_kernel
+          # EROFS support
+          patch -p1 < $GITHUB_WORKSPACE/erofs_4.14_cezanne.patch
+          grep -q CONFIG_EROFS_FS arch/arm64/configs/vendor/cezanne_user_defconfig || cat >> arch/arm64/configs/vendor/cezanne_user_defconfig <<'EOF'
+          CONFIG_EROFS_FS=y
+          CONFIG_EROFS_FS_XATTR=y
+          CONFIG_EROFS_FS_POSIX_ACL=y
+          CONFIG_EROFS_FS_SECURITY=y
+          CONFIG_EROFS_FS_ZIP=y
+          EOF
+          grep -n "CONFIG_EROFS" arch/arm64/configs/vendor/cezanne_user_defconfig | head -6
+          # fingerprint deep-sleep wakeup window (existing fix)
           sed -i 's/#define WAKELOCK_HOLD_TIME 2000/#define WAKELOCK_HOLD_TIME 8000/' drivers/input/fingerprint/goodix/gf_spi_tee.c
           grep -n "WAKELOCK_HOLD_TIME" drivers/input/fingerprint/goodix/gf_spi_tee.c
 
