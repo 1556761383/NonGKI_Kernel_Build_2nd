@@ -1557,7 +1557,7 @@ index 0000000..32f79b1
 +#endif
 diff --git a/fs/erofs/inode.c b/fs/erofs/inode.c
 new file mode 100644
-index 0000000..c7fd150
+index 0000000..39378bc
 --- /dev/null
 +++ b/fs/erofs/inode.c
 @@ -0,0 +1,376 @@
@@ -1900,10 +1900,10 @@ index 0000000..c7fd150
 +	return inode;
 +}
 +
-+int erofs_getattr(struct vfsmount *mnt, struct dentry *dentry,
-+			struct kstat *stat)
++int erofs_getattr(const struct path *path, struct kstat *stat,
++		  u32 request_mask, unsigned int query_flags)
 +{
-+	struct inode *const inode = d_inode(dentry);
++	struct inode *const inode = d_inode(path->dentry);
 +
 +#if 0
 +	if (erofs_inode_is_data_compressed(EROFS_I(inode)->datalayout))
@@ -1939,7 +1939,7 @@ index 0000000..c7fd150
 +};
 diff --git a/fs/erofs/internal.h b/fs/erofs/internal.h
 new file mode 100644
-index 0000000..37b5d20
+index 0000000..4f8d34c
 --- /dev/null
 +++ b/fs/erofs/internal.h
 @@ -0,0 +1,475 @@
@@ -2335,8 +2335,8 @@ index 0000000..37b5d20
 +extern const struct inode_operations erofs_fast_symlink_iops;
 +
 +struct inode *erofs_iget(struct super_block *sb, erofs_nid_t nid, bool dir);
-+int erofs_getattr(struct vfsmount *mnt, struct dentry *dentry,
-+			struct kstat *stat);
++int erofs_getattr(const struct path *path, struct kstat *stat,
++		  u32 request_mask, unsigned int query_flags);
 +
 +/* namei.c */
 +extern const struct inode_operations erofs_dir_iops;
