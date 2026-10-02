@@ -128,6 +128,19 @@ jobs:
           CONFIG_EROFS_FS_ZIP=y
           EOF
           grep -n "CONFIG_EROFS" arch/arm64/configs/vendor/cezanne_user_defconfig | head -6
+          # F2FS support (HyperOS 3 /data is f2fs)
+          grep -q CONFIG_F2FS_FS arch/arm64/configs/vendor/cezanne_user_defconfig || cat >> arch/arm64/configs/vendor/cezanne_user_defconfig <<'EOF'
+          CONFIG_F2FS_FS=y
+          CONFIG_F2FS_FS_XATTR=y
+          CONFIG_F2FS_FS_POSIX_ACL=y
+          CONFIG_F2FS_FS_SECURITY=y
+          CONFIG_F2FS_FS_COMPRESSION=y
+          CONFIG_F2FS_FS_LZ4=y
+          CONFIG_F2FS_FS_ZSTD=y
+          CONFIG_QUOTA=y
+          CONFIG_QUOTACTL=y
+          EOF
+          grep -c "CONFIG_F2FS_FS\|CONFIG_QUOTA" arch/arm64/configs/vendor/cezanne_user_defconfig
           # fingerprint deep-sleep wakeup window (existing fix)
           sed -i 's/#define WAKELOCK_HOLD_TIME 2000/#define WAKELOCK_HOLD_TIME 8000/' drivers/input/fingerprint/goodix/gf_spi_tee.c
           grep -n "WAKELOCK_HOLD_TIME" drivers/input/fingerprint/goodix/gf_spi_tee.c
