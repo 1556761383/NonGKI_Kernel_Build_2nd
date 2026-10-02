@@ -280,7 +280,7 @@ index 0000000..3701c72
 +#endif
 diff --git a/fs/erofs/data.c b/fs/erofs/data.c
 new file mode 100644
-index 0000000..8704816
+index 0000000..6af5b9e
 --- /dev/null
 +++ b/fs/erofs/data.c
 @@ -0,0 +1,334 @@
@@ -305,7 +305,7 @@ index 0000000..8704816
 +		/* page is already locked */
 +		DBG_BUGON(PageUptodate(page));
 +
-+		if (bio->bi_error)
++		if (bio->bi_status)
 +			SetPageError(page);
 +		else
 +			SetPageUptodate(page);
@@ -490,7 +490,7 @@ index 0000000..8704816
 +		bio = bio_alloc(GFP_NOIO, nblocks);
 +
 +		bio->bi_end_io = erofs_readendio;
-+		bio->bi_bdev = sb->s_bdev;
++		bio_set_dev(bio, sb->s_bdev);
 +		bio->bi_iter.bi_sector = (sector_t)blknr <<
 +			LOG_SECTORS_PER_BLOCK;
 +		bio->bi_opf = REQ_OP_READ | (ra ? REQ_RAHEAD : 0);
@@ -4861,7 +4861,7 @@ index 0000000..366dcb4
 +
 diff --git a/fs/erofs/zdata.c b/fs/erofs/zdata.c
 new file mode 100644
-index 0000000..eb368e7
+index 0000000..1401b96
 --- /dev/null
 +++ b/fs/erofs/zdata.c
 @@ -0,0 +1,1622 @@
@@ -5830,11 +5830,11 @@ index 0000000..eb368e7
 +		DBG_BUGON(PageUptodate(page));
 +		DBG_BUGON(z_erofs_page_is_invalidated(page));
 +
-+		if (bio->bi_error)
++		if (bio->bi_status)
 +			SetPageError(page);
 +
 +		if (erofs_page_is_managed(EROFS_SB(q->sb), page)) {
-+			if (!bio->bi_error)
++			if (!bio->bi_status)
 +				SetPageUptodate(page);
 +			unlock_page(page);
 +		}
@@ -6329,7 +6329,7 @@ index 0000000..eb368e7
 +				bio = bio_alloc(GFP_NOIO, BIO_MAX_PAGES);
 +
 +				bio->bi_end_io = z_erofs_decompressqueue_endio;
-+				bio->bi_bdev = sb->s_bdev;
++				bio_set_dev(bio, sb->s_bdev);
 +				bio->bi_iter.bi_sector = (sector_t)cur <<
 +					LOG_SECTORS_PER_BLOCK;
 +				bio->bi_private = bi_private;
@@ -7457,7 +7457,7 @@ index 0000000..b05464f
 +#endif
 diff --git a/include/trace/events/erofs.h b/include/trace/events/erofs.h
 new file mode 100644
-index 0000000..bf9806f
+index 0000000..27f5caa
 --- /dev/null
 +++ b/include/trace/events/erofs.h
 @@ -0,0 +1,259 @@
@@ -7576,10 +7576,10 @@ index 0000000..bf9806f
 +
 +TRACE_EVENT(erofs_readpages,
 +
-+	TP_PROTO(struct inode *inode, pgoff_t start, unsigned int nrpage,
++	TP_PROTO(struct inode *inode, struct page *page, unsigned int nrpage,
 +		bool raw),
 +
-+	TP_ARGS(inode, start, nrpage, raw),
++	TP_ARGS(inode, page, nrpage, raw),
 +
 +	TP_STRUCT__entry(
 +		__field(dev_t,		dev	)
@@ -7592,7 +7592,7 @@ index 0000000..bf9806f
 +	TP_fast_assign(
 +		__entry->dev	= inode->i_sb->s_dev;
 +		__entry->nid	= EROFS_I(inode)->nid;
-+		__entry->start	= start;
++		__entry->start	= page->index;
 +		__entry->nrpage	= nrpage;
 +		__entry->raw	= raw;
 +	),
